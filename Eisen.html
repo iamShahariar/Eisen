@@ -55,9 +55,11 @@
   .orb1 { width: 400px; height: 400px; background: var(--q1-color); top: -100px; left: -100px; animation: float1 20s ease-in-out infinite; }
   .orb2 { width: 350px; height: 350px; background: var(--q2-color); bottom: -80px; right: -80px; animation: float2 24s ease-in-out infinite; }
   .orb3 { width: 300px; height: 300px; background: var(--q4-color); bottom: 20%; left: 10%; animation: float3 26s ease-in-out infinite; }
-  @keyframes float1 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(80px, 60px); } }
-  @keyframes float2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-60px, -80px); } }
-  @keyframes float3 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(50px, -40px); } }
+  .orb4 { width: 260px; height: 260px; background: var(--q3-color); top: 30%; right: 15%; animation: float4 22s ease-in-out infinite; }
+  @keyframes float1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(80px, 60px) scale(1.08); } }
+  @keyframes float2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-60px, -80px) scale(1.1); } }
+  @keyframes float3 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(50px, -40px) scale(0.95); } }
+  @keyframes float4 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-40px, 50px) scale(1.06); } }
   .app {
     position: relative;
     z-index: 1;
@@ -72,15 +74,25 @@
     align-items: center;
     gap: 20px;
     margin-bottom: 32px;
+    animation: fadeSlideDown 0.6s ease;
+  }
+  @keyframes fadeSlideDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
   }
   .title-block h1 {
     font-size: clamp(24px, 4vw, 36px);
     font-weight: 700;
-    background: linear-gradient(90deg, #3d3d6b, #6a5acd);
+    background: linear-gradient(90deg, #3d3d6b, #6a5acd, #ff5e6c, #6a5acd, #3d3d6b);
+    background-size: 300% auto;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     letter-spacing: -0.5px;
+    animation: titleShine 8s linear infinite;
+  }
+  @keyframes titleShine {
+    to { background-position: 300% center; }
   }
   .title-block p {
     color: var(--text-secondary);
@@ -106,7 +118,7 @@
     cursor: pointer;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    transition: all 0.25s ease;
+    transition: all 0.25s cubic-bezier(.34,1.56,.64,1);
     white-space: nowrap;
     box-shadow: 0 2px 8px rgba(20,20,40,0.05);
   }
@@ -115,15 +127,18 @@
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(20,20,40,0.12);
   }
-  .btn:active { transform: translateY(0); }
+  .btn:active { transform: translateY(0) scale(0.97); }
   .btn-primary {
     background: linear-gradient(135deg, #667eea, #764ba2);
+    background-size: 200% 200%;
     border: none;
     color: #fff;
+    transition: all 0.25s cubic-bezier(.34,1.56,.64,1), background-position 0.5s ease;
   }
-  .btn-primary:hover { box-shadow: 0 8px 24px rgba(118, 75, 162, 0.35); }
+  .btn-primary:hover { box-shadow: 0 8px 24px rgba(118, 75, 162, 0.35); background-position: 100% 100%; }
   .btn-danger { border-color: rgba(255,94,108,0.4); color: #c9394a; }
   .btn-danger:hover { background: rgba(255,94,108,0.1); }
+  .btn-sort { position: relative; }
   .btn-trash { position: relative; }
   .trash-badge {
     position: absolute;
@@ -140,6 +155,11 @@
     align-items: center;
     justify-content: center;
     padding: 0 4px;
+    animation: badgePop 0.3s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes badgePop {
+    from { transform: scale(0); }
+    to { transform: scale(1); }
   }
   .trash-badge.hidden { display: none; }
   .stats-bar {
@@ -158,10 +178,25 @@
     position: relative;
     overflow: hidden;
     box-shadow: 0 2px 10px rgba(20,20,40,0.04);
+    animation: fadeSlideUp 0.5s ease backwards;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 26px rgba(20,20,40,0.1);
+  }
+  .stat-card:nth-child(1) { animation-delay: 0.05s; }
+  .stat-card:nth-child(2) { animation-delay: 0.1s; }
+  .stat-card:nth-child(3) { animation-delay: 0.15s; }
+  .stat-card:nth-child(4) { animation-delay: 0.2s; }
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
   }
   .stat-card .stat-num {
     font-size: 26px;
     font-weight: 800;
+    transition: color 0.3s ease;
   }
   .stat-card .stat-label {
     font-size: 12px;
@@ -177,6 +212,80 @@
     width: 4px; height: 100%;
     background: var(--accent, #667eea);
   }
+  /* ===== Sort dropdown (attached to the Sort Tasks button) ===== */
+  .sort-dropdown-wrap {
+    position: relative;
+    display: inline-block;
+  }
+  .sort-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 240px;
+    background: #ffffff;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    box-shadow: 0 14px 40px rgba(20,20,40,0.18);
+    z-index: 50;
+    animation: fadeSlideUp 0.18s ease;
+  }
+  .sort-dropdown.active { display: block; }
+  .sort-dropdown-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+  .sort-dropdown select {
+    width: 100%;
+    background: rgba(20,20,40,0.04);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s ease;
+    margin-bottom: 10px;
+  }
+  .sort-dropdown select:focus { border-color: #764ba2; }
+  .sort-dropdown .sort-dir-btn {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--glass-border);
+    background: rgba(20,20,40,0.04);
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .sort-dropdown .sort-dir-btn:hover { background: rgba(20,20,40,0.08); }
+  .sort-dropdown .sort-dir-btn svg { width: 13px; height: 13px; transition: transform 0.25s ease; }
+  .sort-dropdown .sort-dir-btn.desc svg { transform: rotate(180deg); }
+  .sort-dropdown .sort-manual-note {
+    font-size: 11px;
+    color: var(--text-secondary);
+    background: rgba(102,126,234,0.1);
+    padding: 6px 10px;
+    border-radius: 20px;
+    display: none;
+    text-align: center;
+    margin-top: 10px;
+  }
+  .sort-dropdown.manual-mode .sort-manual-note { display: block; }
+  .sort-dropdown.manual-mode .sort-dir-btn { opacity: 0.4; pointer-events: none; }
   /* ===== MATRIX GRID with proper axis labels ===== */
   .matrix-wrapper {
     display: grid;
@@ -242,12 +351,22 @@
     display: flex;
     flex-direction: column;
     min-height: 320px;
-    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
     position: relative;
     box-shadow: 0 4px 18px rgba(20,20,40,0.05);
+    animation: quadrantRise 0.55s cubic-bezier(.22,1,.36,1) backwards;
+  }
+  #q1 { animation-delay: 0.05s; }
+  #q2 { animation-delay: 0.12s; }
+  #q3 { animation-delay: 0.19s; }
+  #q4 { animation-delay: 0.26s; }
+  @keyframes quadrantRise {
+    from { opacity: 0; transform: translateY(24px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
   .quadrant.drag-over {
-    box-shadow: 0 0 0 2px var(--accent, #667eea), 0 0 30px var(--glow, rgba(102,126,234,0.25));
+    box-shadow: 0 0 0 2px var(--accent, #667eea), 0 0 36px var(--glow, rgba(102,126,234,0.3));
+    transform: scale(1.008);
   }
   #q1 { --accent: var(--q1-color); --glow: var(--q1-glow); }
   #q2 { --accent: var(--q2-color); --glow: var(--q2-glow); }
@@ -274,6 +393,11 @@
     border-radius: 50%;
     background: var(--accent);
     box-shadow: 0 0 10px var(--accent);
+    animation: dotPulse 2.4s ease-in-out infinite;
+  }
+  @keyframes dotPulse {
+    0%, 100% { box-shadow: 0 0 6px var(--accent); }
+    50% { box-shadow: 0 0 14px var(--accent), 0 0 22px var(--glow); }
   }
   .quadrant-subtitle {
     font-size: 11px;
@@ -287,12 +411,14 @@
     padding: 3px 10px;
     font-size: 12px;
     font-weight: 700;
+    transition: transform 0.2s cubic-bezier(.34,1.56,.64,1);
   }
+  .quadrant-count.bump { transform: scale(1.25); }
   .task-list {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 6px;
     overflow-y: auto;
     padding-right: 4px;
     min-height: 60px;
@@ -311,33 +437,64 @@
     background: rgba(255,255,255,0.65);
     border: 1px solid rgba(20,20,40,0.07);
     border-radius: var(--radius-sm);
-    padding: 12px 12px 12px 14px;
+    padding: 6px 8px 6px 8px;
     cursor: grab;
-    transition: all 0.2s ease;
-    animation: slideIn 0.3s ease;
+    transition: background 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    animation: slideIn 0.35s cubic-bezier(.22,1,.36,1);
     position: relative;
     border-left: 3px solid var(--accent);
   }
   @keyframes slideIn {
-    from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(-10px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
   .task-item:hover {
     background: rgba(255,255,255,0.95);
-    transform: translateX(2px);
-    box-shadow: 0 4px 14px rgba(20,20,40,0.08);
+    box-shadow: 0 4px 12px rgba(20,20,40,0.08);
   }
-  .task-item.dragging { opacity: 0.4; cursor: grabbing; }
+  .task-item.dragging { opacity: 0.4; cursor: grabbing; transform: scale(0.97) rotate(-1deg); }
   .task-item.completed { opacity: 0.55; }
   .task-item.completed .task-text { text-decoration: line-through; }
+  .task-item.manual-drag-target {
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+  .drop-indicator {
+    height: 3px;
+    border-radius: 3px;
+    background: var(--accent, #667eea);
+    box-shadow: 0 0 8px var(--accent, #667eea);
+    margin: -3px 0;
+    animation: fadeIn 0.15s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   .task-top {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
+    gap: 8px;
+  }
+  .drag-handle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 12px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    cursor: grab;
+    opacity: 0.3;
+    transition: opacity 0.15s ease;
+  }
+  .task-item:hover .drag-handle { opacity: 0.7; }
+  .drag-handle:hover { opacity: 1 !important; }
+  .drag-handle span {
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: var(--text-secondary);
   }
   .task-checkbox {
-    width: 18px; height: 18px;
-    border-radius: 5px;
+    width: 15px; height: 15px;
+    border-radius: 4px;
     border: 2px solid var(--accent);
     flex-shrink: 0;
     margin-top: 1px;
@@ -345,34 +502,42 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(.34,1.56,.64,1);
     background: transparent;
   }
   .task-checkbox.checked {
     background: var(--accent);
+    transform: scale(1.05);
   }
-  .task-checkbox svg { width: 11px; height: 11px; opacity: 0; transition: opacity 0.15s ease; }
+  .task-checkbox svg { width: 9px; height: 9px; opacity: 0; transition: opacity 0.15s ease; }
   .task-checkbox.checked svg { opacity: 1; }
   .task-text {
     flex: 1;
-    font-size: 13.5px;
-    line-height: 1.4;
+    font-size: 13px;
+    line-height: 1.3;
     word-break: break-word;
-    cursor: pointer;
+    cursor: default;
   }
+  .task-text a {
+    color: #4a5ee0;
+    text-decoration: underline;
+    text-decoration-color: rgba(74,94,224,0.4);
+    word-break: break-all;
+  }
+  .task-text a:hover { text-decoration-color: #4a5ee0; }
   .task-meta {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-top: 8px;
-    margin-left: 28px;
+    gap: 5px;
+    margin-top: 4px;
+    margin-left: 23px;
     flex-wrap: wrap;
   }
   .field-tag {
-    font-size: 10.5px;
+    font-size: 10px;
     color: var(--text-secondary);
     background: rgba(20,20,40,0.05);
-    padding: 2px 8px;
+    padding: 1px 7px;
     border-radius: 10px;
     display: inline-flex;
     align-items: center;
@@ -397,7 +562,7 @@
   }
   .task-item:hover .task-actions { opacity: 1; }
   .task-icon-btn {
-    width: 22px; height: 22px;
+    width: 20px; height: 20px;
     border-radius: 6px;
     border: none;
     background: rgba(20,20,40,0.06);
@@ -408,8 +573,8 @@
     justify-content: center;
     transition: all 0.15s ease;
   }
-  .task-icon-btn:hover { background: rgba(255,94,108,0.18); color: #c9394a; }
-  .task-icon-btn svg { width: 12px; height: 12px; }
+  .task-icon-btn:hover { background: rgba(255,94,108,0.18); color: #c9394a; transform: scale(1.1); }
+  .task-icon-btn svg { width: 11px; height: 11px; }
   .quadrant-add {
     display: flex;
     gap: 8px;
@@ -424,10 +589,10 @@
     color: var(--text-primary);
     font-size: 13px;
     outline: none;
-    transition: border-color 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
   .quadrant-add input[type="text"]::placeholder { color: rgba(28,28,40,0.35); }
-  .quadrant-add input[type="text"]:focus { border-color: var(--accent); }
+  .quadrant-add input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
   .quadrant-add button {
     width: 36px;
     border-radius: var(--radius-sm);
@@ -437,10 +602,10 @@
     font-size: 18px;
     font-weight: 700;
     cursor: pointer;
-    transition: transform 0.15s ease;
+    transition: transform 0.15s cubic-bezier(.34,1.56,.64,1);
     flex-shrink: 0;
   }
-  .quadrant-add button:hover { transform: scale(1.08); }
+  .quadrant-add button:hover { transform: scale(1.1) rotate(90deg); }
   .quadrant-add button:active { transform: scale(0.95); }
   .quadrant-hint {
     font-size: 10.5px;
@@ -461,7 +626,8 @@
     z-index: 100;
     padding: 20px;
   }
-  .modal-overlay.active { display: flex; }
+  .modal-overlay.active { display: flex; animation: overlayFade 0.2s ease; }
+  @keyframes overlayFade { from { opacity: 0; } to { opacity: 1; } }
   .modal {
     background: #ffffff;
     border: 1px solid var(--glass-border);
@@ -470,10 +636,10 @@
     max-width: 440px;
     width: 100%;
     box-shadow: 0 30px 80px rgba(20,20,40,0.25);
-    animation: modalPop 0.25s ease;
+    animation: modalPop 0.3s cubic-bezier(.22,1.4,.36,1);
   }
   @keyframes modalPop {
-    from { opacity: 0; transform: scale(0.92) translateY(10px); }
+    from { opacity: 0; transform: scale(0.9) translateY(16px); }
     to { opacity: 1; transform: scale(1) translateY(0); }
   }
   .modal h2 {
@@ -554,11 +720,11 @@
     font-size: 13.5px;
     font-family: inherit;
     outline: none;
-    transition: border-color 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
     resize: vertical;
   }
   .field-group input:focus,
-  .field-group textarea:focus { border-color: #764ba2; }
+  .field-group textarea:focus { border-color: #764ba2; box-shadow: 0 0 0 3px rgba(118,75,162,0.12); }
   .field-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -590,6 +756,13 @@
     font-family: inherit;
     font-size: 10.5px;
   }
+  .last-edited-note {
+    font-size: 11px;
+    color: var(--text-secondary);
+    opacity: 0.7;
+    margin-top: -10px;
+    margin-bottom: 16px;
+  }
   /* Trash panel */
   .trash-overlay {
     position: fixed;
@@ -602,7 +775,7 @@
     z-index: 100;
     padding: 20px;
   }
-  .trash-overlay.active { display: flex; }
+  .trash-overlay.active { display: flex; animation: overlayFade 0.2s ease; }
   .trash-modal {
     background: #ffffff;
     border: 1px solid var(--glass-border);
@@ -614,15 +787,21 @@
     display: flex;
     flex-direction: column;
     box-shadow: 0 30px 80px rgba(20,20,40,0.25);
-    animation: modalPop 0.25s ease;
+    animation: modalPop 0.3s cubic-bezier(.22,1.4,.36,1);
   }
   .trash-modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 6px;
+    flex-wrap: wrap;
+    gap: 10px;
   }
   .trash-modal-header h2 { margin-bottom: 0; }
+  .trash-modal-header-actions {
+    display: flex;
+    gap: 8px;
+  }
   .trash-list {
     flex: 1;
     overflow-y: auto;
@@ -642,6 +821,8 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    animation: slideIn 0.25s ease;
+    transition: transform 0.2s ease, opacity 0.2s ease;
   }
   .trash-item-text {
     flex: 1;
@@ -682,7 +863,7 @@
     z-index: 200;
     opacity: 0;
     pointer-events: none;
-    transition: all 0.3s ease;
+    transition: all 0.35s cubic-bezier(.22,1.4,.36,1);
     display: flex;
     align-items: center;
     gap: 10px;
@@ -693,7 +874,7 @@
     transform: translateX(-50%) translateY(0);
     pointer-events: auto;
   }
-  .toast-dot { width: 8px; height: 8px; border-radius: 50%; background: #2bb87a; }
+  .toast-dot { width: 8px; height: 8px; border-radius: 50%; background: #2bb87a; animation: dotPulse 1.6s ease-in-out infinite; }
   .toast.error .toast-dot { background: #ff5e6c; }
   footer {
     text-align: center;
@@ -719,6 +900,7 @@
     .header-actions { width: 100%; }
     .btn { flex: 1; justify-content: center; }
     .field-row { grid-template-columns: 1fr; }
+    .sort-dropdown { left: 0; right: 0; min-width: 0; }
   }
 </style>
 </head>
@@ -726,6 +908,7 @@
 <div class="orb orb1"></div>
 <div class="orb orb2"></div>
 <div class="orb orb3"></div>
+<div class="orb orb4"></div>
 <div class="app">
   <header>
     <div class="title-block">
@@ -733,6 +916,30 @@
       <p>Urgent vs. Important — decide what actually matters</p>
     </div>
     <div class="header-actions">
+      <div class="sort-dropdown-wrap">
+        <button class="btn btn-sort" id="sortToggleBtn" title="Choose how tasks are sorted within each block">⇅ Sort Tasks</button>
+        <div class="sort-dropdown" id="sortDropdown">
+          <div class="sort-dropdown-label">Sort all blocks by</div>
+          <select id="sortBySelect">
+            <option value="manual">Manual (drag to reorder)</option>
+            <option value="created">Creation date</option>
+            <option value="modified">Last modified</option>
+            <option value="cue">Cue</option>
+            <option value="craving">Craving</option>
+            <option value="action">Action</option>
+            <option value="reward">Reward</option>
+            <option value="duration">Duration</option>
+            <option value="deadline">Deadline</option>
+            <option value="text">Task text (A–Z)</option>
+            <option value="quadrant">Quadrant</option>
+          </select>
+          <button class="sort-dir-btn" id="sortDirBtn" title="Toggle ascending/descending">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+            <span id="sortDirLabel">Ascending</span>
+          </button>
+          <div class="sort-manual-note">Drag tasks up/down within a block to reorder them</div>
+        </div>
+      </div>
       <button class="btn" id="exportBtn" title="Export all tasks to Eisen.JSON">⭳ Export Eisen.JSON</button>
       <button class="btn" id="importBtn" title="Import tasks from Eisen.JSON">⭱ Import JSON</button>
       <input type="file" id="importFileInput" accept="application/json">
@@ -864,6 +1071,17 @@
     </div>
   </div>
 </div>
+<!-- Empty trash confirmation modal -->
+<div class="modal-overlay" id="emptyTrashModal">
+  <div class="modal">
+    <h2>Empty trash permanently?</h2>
+    <p>Every task currently in the trash will be permanently deleted. This cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn" id="cancelEmptyTrash">Cancel</button>
+      <button class="btn btn-danger" id="confirmEmptyTrash">Yes, Delete Forever</button>
+    </div>
+  </div>
+</div>
 <!-- Task detail / edit modal -->
 <div class="modal-overlay" id="taskModal">
   <div class="modal task-modal">
@@ -872,32 +1090,27 @@
       <span class="task-modal-quadrant-badge" id="taskModalQuadrantBadge">Do First</span>
     </div>
     <div class="task-modal-sub">All fields are optional. Press <strong>Enter</strong> in any single-line field to save instantly, or use the buttons below.</div>
-
+    <div class="last-edited-note" id="lastEditedNote"></div>
     <div class="field-group">
       <label for="fieldText">Task</label>
       <input type="text" id="fieldText" placeholder="What needs doing?">
     </div>
-
     <div class="field-group">
       <label for="fieldCue">Cue <span class="field-hint">— what triggers this task?</span></label>
       <input type="text" id="fieldCue" placeholder="e.g. After my morning coffee">
     </div>
-
     <div class="field-group">
       <label for="fieldCraving">Craving <span class="field-hint">— what outcome do you want?</span></label>
       <input type="text" id="fieldCraving" placeholder="e.g. Feel on top of my inbox">
     </div>
-
     <div class="field-group">
       <label for="fieldAction">Action <span class="field-hint">— the concrete next step</span></label>
       <textarea id="fieldAction" rows="2" placeholder="e.g. Reply to the 3 flagged emails"></textarea>
     </div>
-
     <div class="field-group">
       <label for="fieldReward">Reward <span class="field-hint">— how you'll reinforce it</span></label>
       <input type="text" id="fieldReward" placeholder="e.g. 10 min break with music">
     </div>
-
     <div class="field-row">
       <div class="field-group">
         <label for="fieldDeadline">Deadline</label>
@@ -908,7 +1121,10 @@
         <input type="text" id="fieldDuration" placeholder="e.g. 30 min">
       </div>
     </div>
-
+    <div class="field-group">
+      <label for="fieldNote">Note <span class="field-hint">— any extra detail, links, etc.</span></label>
+      <textarea id="fieldNote" rows="3" placeholder="Free-form notes… URLs will become clickable"></textarea>
+    </div>
     <div class="task-modal-actions">
       <div class="left-actions">
         <button class="btn btn-danger" id="taskModalDelete">🗑 Move to Trash</button>
@@ -926,7 +1142,10 @@
   <div class="trash-modal">
     <div class="trash-modal-header">
       <h2>Trash</h2>
-      <button class="btn" id="closeTrash">Close</button>
+      <div class="trash-modal-header-actions">
+        <button class="btn btn-danger" id="emptyTrashBtn">Empty Trash</button>
+        <button class="btn" id="closeTrash">Close</button>
+      </div>
     </div>
     <p style="font-size:12px; color:var(--text-secondary); margin-top:4px;">Trashed tasks are kept here forever unless you delete them permanently. Every task you create, edit, or clear from the matrix ends up here when removed.</p>
     <div class="trash-list" id="trashList"></div>
@@ -950,10 +1169,14 @@
   // state.tasks = active tasks currently in the matrix
   // state.trash = tasks that have been moved to trash (kept forever unless permanently deleted)
   // state.settings = app-level style/settings snapshot, included in every export
-  let state = { tasks: [], trash: [], settings: {} };
+  // state.sort = { by: 'manual'|'created'|'modified'|'cue'|'craving'|'action'|'reward'|'duration'|'deadline'|'text'|'quadrant', dir: 'asc'|'desc' }
+  let state = { tasks: [], trash: [], settings: {}, sort: { by: 'manual', dir: 'asc' } };
   let pendingImportData = null;
   let draggedTaskId = null;
   let editingTaskId = null; // id of the task currently open in the detail modal, or null if creating fresh via quick-add
+  // Manual-reorder drag state (separate concern from cross-quadrant drag, but uses the same native DnD events)
+  let manualDragOverTaskId = null;
+  let manualDragOverPosition = null; // 'before' | 'after'
   // ---------- Persistence ----------
   function loadState() {
     try {
@@ -964,15 +1187,18 @@
           state = {
             tasks: parsed.tasks || [],
             trash: Array.isArray(parsed.trash) ? parsed.trash : [],
-            settings: parsed.settings || {}
+            settings: parsed.settings || {},
+            sort: (parsed.sort && typeof parsed.sort === 'object') ? parsed.sort : { by: 'manual', dir: 'asc' }
           };
+          // Backfill sortOrder for any tasks that predate manual sorting
+          backfillSortOrder();
           return;
         }
       }
     } catch (e) {
       console.warn('Failed to load saved data', e);
     }
-    state = { tasks: [], trash: [], settings: {} };
+    state = { tasks: [], trash: [], settings: {}, sort: { by: 'manual', dir: 'asc' } };
   }
   function saveState() {
     try {
@@ -984,16 +1210,59 @@
   function uid() {
     return 't-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
   }
+  // Ensures every task has a numeric sortOrder so manual drag-reordering has something stable to work with.
+  function backfillSortOrder() {
+    QUADRANTS.forEach(q => {
+      const tasksInQ = state.tasks.filter(t => t.quadrant === q).sort((a, b) => a.createdAt - b.createdAt);
+      tasksInQ.forEach((t, i) => {
+        if (typeof t.sortOrder !== 'number') t.sortOrder = i;
+      });
+    });
+  }
   // ---------- Rendering ----------
   function render() {
     QUADRANTS.forEach(q => renderQuadrant(q));
     renderStats();
     renderTrashBadge();
   }
+  // Returns tasks for a quadrant in the order dictated by the current master sort setting.
+  function getSortedTasksForQuadrant(q) {
+    const tasks = state.tasks.filter(t => t.quadrant === q);
+    const by = state.sort.by;
+    const dirMult = state.sort.dir === 'desc' ? -1 : 1;
+    if (by === 'manual') {
+      return tasks.sort((a, b) => ((a.sortOrder ?? 0) - (b.sortOrder ?? 0)));
+    }
+    const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true });
+    tasks.sort((a, b) => {
+      let cmp = 0;
+      switch (by) {
+        case 'created': cmp = (a.createdAt || 0) - (b.createdAt || 0); break;
+        case 'modified': cmp = (a.updatedAt || 0) - (b.updatedAt || 0); break;
+        case 'cue': cmp = collator.compare(a.cue || '', b.cue || ''); break;
+        case 'craving': cmp = collator.compare(a.craving || '', b.craving || ''); break;
+        case 'action': cmp = collator.compare(a.action || '', b.action || ''); break;
+        case 'reward': cmp = collator.compare(a.reward || '', b.reward || ''); break;
+        case 'duration': cmp = collator.compare(a.duration || '', b.duration || ''); break;
+        case 'deadline': {
+          const ad = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+          const bd = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+          cmp = ad - bd;
+          break;
+        }
+        case 'text': cmp = collator.compare(a.text || '', b.text || ''); break;
+        case 'quadrant': cmp = collator.compare(QUADRANT_LABELS[a.quadrant] || '', QUADRANT_LABELS[b.quadrant] || ''); break;
+        default: cmp = 0;
+      }
+      // Stable tiebreak by manual sortOrder so equal values don't jump around on re-render
+      if (cmp === 0) cmp = (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+      return cmp * dirMult;
+    });
+    return tasks;
+  }
   function renderQuadrant(q) {
     const listEl = document.getElementById('list-' + q);
-    const tasks = state.tasks.filter(t => t.quadrant === q)
-      .sort((a, b) => (a.completed - b.completed) || (b.createdAt - a.createdAt));
+    const tasks = getSortedTasksForQuadrant(q);
     listEl.innerHTML = '';
     document.getElementById('count-' + q).textContent = tasks.length;
     if (tasks.length === 0) {
@@ -1005,6 +1274,42 @@
     }
     tasks.forEach(task => listEl.appendChild(buildTaskEl(task)));
   }
+  // Turns plain text containing URLs into a DOM fragment with real, clickable <a> links.
+  // Used anywhere task text/notes are rendered (card text and, indirectly, could be reused for notes preview).
+  const URL_REGEX = /((?:https?:\/\/|www\.)[^\s<>"']+)/gi;
+  function linkifyToFragment(text) {
+    const frag = document.createDocumentFragment();
+    if (!text) return frag;
+    let lastIndex = 0;
+    let match;
+    URL_REGEX.lastIndex = 0;
+    while ((match = URL_REGEX.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        frag.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+      }
+      let raw = match[0];
+      // Trim common trailing punctuation that's likely not part of the URL
+      let trailing = '';
+      while (raw.length && /[.,!?;:)\]]$/.test(raw)) {
+        trailing = raw.slice(-1) + trailing;
+        raw = raw.slice(0, -1);
+      }
+      const href = raw.match(/^https?:\/\//i) ? raw : 'https://' + raw;
+      const a = document.createElement('a');
+      a.href = href;
+      a.textContent = raw;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.addEventListener('click', (e) => e.stopPropagation());
+      frag.appendChild(a);
+      if (trailing) frag.appendChild(document.createTextNode(trailing));
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < text.length) {
+      frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+    }
+    return frag;
+  }
   function buildTaskEl(task) {
     const el = document.createElement('div');
     el.className = 'task-item' + (task.completed ? ' completed' : '');
@@ -1012,15 +1317,19 @@
     el.dataset.id = task.id;
     const top = document.createElement('div');
     top.className = 'task-top';
+    const handle = document.createElement('div');
+    handle.className = 'drag-handle';
+    handle.title = 'Drag to reorder or move to another block';
+    handle.innerHTML = '<span></span><span></span><span></span><span></span><span></span><span></span>';
     const checkbox = document.createElement('div');
     checkbox.className = 'task-checkbox' + (task.completed ? ' checked' : '');
     checkbox.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
     checkbox.addEventListener('click', (e) => { e.stopPropagation(); toggleComplete(task.id); });
     const text = document.createElement('div');
     text.className = 'task-text';
-    text.textContent = task.text || '(untitled task)';
-    text.title = 'Double-click to edit full details';
-    text.addEventListener('dblclick', () => openTaskModal(task.id));
+    text.title = 'Double-click to view/edit full details';
+    text.appendChild(linkifyToFragment(task.text || '(untitled task)'));
+    top.appendChild(handle);
     top.appendChild(checkbox);
     top.appendChild(text);
     el.appendChild(top);
@@ -1032,6 +1341,7 @@
     if (task.action) meta.appendChild(makeFieldTag('⚡', 'Action: ' + task.action));
     if (task.reward) meta.appendChild(makeFieldTag('🎁', 'Reward: ' + task.reward));
     if (task.duration) meta.appendChild(makeFieldTag('⏱', task.duration));
+    if (task.note) meta.appendChild(makeFieldTag('📝', 'Note: ' + task.note));
     if (task.dueDate) {
       const isOverdue = !task.completed && new Date(task.dueDate + 'T23:59:59') < new Date();
       const tag = makeFieldTag(isOverdue ? '⚠' : '📅', formatDate(task.dueDate));
@@ -1055,7 +1365,12 @@
     actions.appendChild(delBtn);
     meta.appendChild(actions);
     el.appendChild(meta);
-    // Drag events
+    // Single click on the card does nothing (per requirement — only double-click opens the modal).
+    // Checkbox and trash icon above already stopPropagation so they keep working on single click.
+    el.addEventListener('dblclick', (e) => {
+      openTaskModal(task.id);
+    });
+    // Drag events — used for BOTH cross-quadrant moves and manual same-block reordering.
     el.addEventListener('dragstart', (e) => {
       draggedTaskId = task.id;
       el.classList.add('dragging');
@@ -1065,8 +1380,67 @@
     el.addEventListener('dragend', () => {
       el.classList.remove('dragging');
       draggedTaskId = null;
+      clearManualDropIndicators();
+    });
+    // Manual reorder: hovering over another task shows a drop-indicator line above/below it.
+    el.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!draggedTaskId || draggedTaskId === task.id) return;
+      const rect = el.getBoundingClientRect();
+      const isAfter = (e.clientY - rect.top) > rect.height / 2;
+      manualDragOverTaskId = task.id;
+      manualDragOverPosition = isAfter ? 'after' : 'before';
+      showManualDropIndicator(el, manualDragOverPosition);
+    });
+    el.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = e.dataTransfer.getData('text/plain') || draggedTaskId;
+      if (!id || id === task.id) { clearManualDropIndicators(); return; }
+      reorderTaskRelativeTo(id, task.id, manualDragOverPosition || 'before', task.quadrant);
+      clearManualDropIndicators();
     });
     return el;
+  }
+  // ---------- Manual drag-reorder helpers ----------
+  function clearManualDropIndicators() {
+    document.querySelectorAll('.drop-indicator').forEach(n => n.remove());
+    manualDragOverTaskId = null;
+    manualDragOverPosition = null;
+  }
+  function showManualDropIndicator(targetEl, position) {
+    clearManualDropIndicators();
+    const indicator = document.createElement('div');
+    indicator.className = 'drop-indicator';
+    if (position === 'after') {
+      targetEl.after(indicator);
+    } else {
+      targetEl.before(indicator);
+    }
+  }
+  // Reorders draggedId to sit immediately before/after targetId, switches its quadrant if needed,
+  // and re-numbers sortOrder for every task in the destination block. Automatically flips the master
+  // sort mode to Manual, since dropping a task in a specific spot only makes sense in manual mode.
+  function reorderTaskRelativeTo(draggedId, targetId, position, destQuadrant) {
+    const dragged = state.tasks.find(t => t.id === draggedId);
+    const target = state.tasks.find(t => t.id === targetId);
+    if (!dragged || !target) return;
+    dragged.quadrant = destQuadrant;
+    dragged.updatedAt = Date.now();
+    // Force manual mode so the visual result of the drag is actually preserved on re-render.
+    if (state.sort.by !== 'manual') {
+      state.sort.by = 'manual';
+      syncSortDropdownUI();
+    }
+    const blockTasks = state.tasks.filter(t => t.quadrant === destQuadrant && t.id !== draggedId)
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+    const targetIdx = blockTasks.findIndex(t => t.id === targetId);
+    const insertAt = position === 'after' ? targetIdx + 1 : targetIdx;
+    blockTasks.splice(insertAt, 0, dragged);
+    blockTasks.forEach((t, i) => { t.sortOrder = i; });
+    saveState();
+    render();
   }
   function makeFieldTag(icon, label) {
     const tag = document.createElement('span');
@@ -1082,6 +1456,10 @@
   function formatDate(dateStr) {
     const d = new Date(dateStr + 'T00:00:00');
     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+  function formatDateTime(ts) {
+    if (!ts) return '';
+    return new Date(ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   }
   function renderStats() {
     const total = state.tasks.length;
@@ -1100,6 +1478,11 @@
     badge.classList.toggle('hidden', count === 0);
   }
   // ---------- Task operations ----------
+  function nextSortOrderFor(quadrant) {
+    const inQ = state.tasks.filter(t => t.quadrant === quadrant);
+    if (inQ.length === 0) return 0;
+    return Math.max(...inQ.map(t => (t.sortOrder ?? 0))) + 1;
+  }
   function makeBlankTask(quadrant, text) {
     return {
       id: uid(),
@@ -1112,6 +1495,8 @@
       reward: '',
       dueDate: null,
       duration: '',
+      note: '',
+      sortOrder: nextSortOrderFor(quadrant),
       createdAt: Date.now(),
       updatedAt: Date.now()
     };
@@ -1147,7 +1532,8 @@
     render();
     showToast('Moved to trash');
   }
-  // Permanently delete a task from the trash — this is the ONLY way data is actually erased.
+  // Permanently delete a task from the trash — this is one of only two ways data is actually erased
+  // (the other being Empty Trash, which does the same thing for every trashed task at once).
   function permanentlyDeleteTrashedTask(id) {
     state.trash = state.trash.filter(t => t.id !== id);
     saveState();
@@ -1155,12 +1541,22 @@
     renderTrashList();
     showToast('Permanently deleted');
   }
+  // Empties the ENTIRE trash in one action — permanently erases every trashed task. Cannot be undone.
+  function emptyTrashPermanently() {
+    const count = state.trash.length;
+    state.trash = [];
+    saveState();
+    render();
+    renderTrashList();
+    showToast('Trash emptied — ' + count + ' task(s) permanently deleted');
+  }
   function recoverTrashedTask(id) {
     const idx = state.trash.findIndex(t => t.id === id);
     if (idx === -1) return;
     const task = state.trash[idx];
     delete task.trashedAt;
     task.updatedAt = Date.now();
+    if (typeof task.sortOrder !== 'number') task.sortOrder = nextSortOrderFor(task.quadrant);
     state.tasks.push(task);
     state.trash.splice(idx, 1);
     saveState();
@@ -1172,6 +1568,7 @@
     const task = state.tasks.find(t => t.id === id);
     if (task && task.quadrant !== newQuadrant) {
       task.quadrant = newQuadrant;
+      task.sortOrder = nextSortOrderFor(newQuadrant);
       task.updatedAt = Date.now();
       saveState();
       render();
@@ -1187,6 +1584,42 @@
     render();
     showToast('All tasks moved to trash');
   }
+  // ---------- Sort dropdown (attached to Sort Tasks button) ----------
+  const sortToggleBtn = document.getElementById('sortToggleBtn');
+  const sortDropdown = document.getElementById('sortDropdown');
+  const sortBySelect = document.getElementById('sortBySelect');
+  const sortDirBtn = document.getElementById('sortDirBtn');
+  const sortDirLabel = document.getElementById('sortDirLabel');
+  sortToggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    sortDropdown.classList.toggle('active');
+  });
+  // Close the dropdown when clicking anywhere outside it
+  document.addEventListener('click', (e) => {
+    if (!sortDropdown.contains(e.target) && e.target !== sortToggleBtn) {
+      sortDropdown.classList.remove('active');
+    }
+  });
+  function syncSortDropdownUI() {
+    sortBySelect.value = state.sort.by;
+    sortDropdown.classList.toggle('manual-mode', state.sort.by === 'manual');
+    sortDirBtn.classList.toggle('desc', state.sort.dir === 'desc');
+    sortDirLabel.textContent = state.sort.dir === 'desc' ? 'Descending' : 'Ascending';
+  }
+  sortBySelect.addEventListener('change', () => {
+    state.sort.by = sortBySelect.value;
+    syncSortDropdownUI();
+    saveState();
+    render();
+    showToast(state.sort.by === 'manual' ? 'Manual sorting enabled — drag tasks to reorder' : 'Sorted by ' + sortBySelect.options[sortBySelect.selectedIndex].text);
+  });
+  sortDirBtn.addEventListener('click', () => {
+    if (state.sort.by === 'manual') return;
+    state.sort.dir = state.sort.dir === 'desc' ? 'asc' : 'desc';
+    syncSortDropdownUI();
+    saveState();
+    render();
+  });
   // ---------- Task detail modal ----------
   const taskModalOverlay = document.getElementById('taskModal');
   const fieldText = document.getElementById('fieldText');
@@ -1196,7 +1629,9 @@
   const fieldReward = document.getElementById('fieldReward');
   const fieldDeadline = document.getElementById('fieldDeadline');
   const fieldDuration = document.getElementById('fieldDuration');
+  const fieldNote = document.getElementById('fieldNote');
   const taskModalQuadrantBadge = document.getElementById('taskModalQuadrantBadge');
+  const lastEditedNote = document.getElementById('lastEditedNote');
   function openTaskModal(id) {
     const task = state.tasks.find(t => t.id === id);
     if (!task) return;
@@ -1208,9 +1643,11 @@
     fieldReward.value = task.reward || '';
     fieldDeadline.value = task.dueDate || '';
     fieldDuration.value = task.duration || '';
+    fieldNote.value = task.note || '';
     taskModalQuadrantBadge.textContent = QUADRANT_LABELS[task.quadrant];
     taskModalQuadrantBadge.style.background = QUADRANT_COLORS[task.quadrant].replace('var(', 'rgba(').replace(')', ', 0.15)');
     taskModalQuadrantBadge.style.color = QUADRANT_COLORS[task.quadrant];
+    lastEditedNote.textContent = 'Created ' + formatDateTime(task.createdAt) + ' · Last edited ' + formatDateTime(task.updatedAt);
     taskModalOverlay.classList.add('active');
     setTimeout(() => fieldText.focus(), 50);
   }
@@ -1218,6 +1655,8 @@
     taskModalOverlay.classList.remove('active');
     editingTaskId = null;
   }
+  // Saving always stamps updatedAt to "now" — even if nothing in the fields actually changed.
+  // Opening the modal and hitting Save (or Enter) counts as a touch/last-edit, per the task requirements.
   function saveTaskModal() {
     if (!editingTaskId) { closeTaskModal(); return; }
     const task = state.tasks.find(t => t.id === editingTaskId);
@@ -1229,6 +1668,7 @@
     task.reward = fieldReward.value.trim();
     task.dueDate = fieldDeadline.value || null;
     task.duration = fieldDuration.value.trim();
+    task.note = fieldNote.value.trim();
     task.updatedAt = Date.now();
     saveState();
     render();
@@ -1244,8 +1684,8 @@
       trashTask(idToTrash);
     }
   });
-  // Enter-to-save inside the task modal, on any single-line field. Shift+Enter in the
-  // textarea still inserts a newline; plain Enter in the textarea also saves.
+  // Enter-to-save inside the task modal, on any single-line field. Shift+Enter in either textarea
+  // still inserts a newline; plain Enter in either textarea also saves.
   [fieldText, fieldCue, fieldCraving, fieldReward, fieldDuration, fieldDeadline].forEach(input => {
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
@@ -1256,15 +1696,17 @@
       }
     });
   });
-  fieldAction.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      saveTaskModal();
-    } else if (e.key === 'Escape') {
-      closeTaskModal();
-    }
+  [fieldAction, fieldNote].forEach(area => {
+    area.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        saveTaskModal();
+      } else if (e.key === 'Escape') {
+        closeTaskModal();
+      }
+    });
   });
-  // ---------- Drag & drop on quadrants ----------
+  // ---------- Drag & drop on quadrants (cross-block move) ----------
   QUADRANTS.forEach(q => {
     const zone = document.getElementById(q);
     zone.addEventListener('dragover', (e) => {
@@ -1275,11 +1717,15 @@
     zone.addEventListener('dragleave', (e) => {
       if (!zone.contains(e.relatedTarget)) zone.classList.remove('drag-over');
     });
+    // This fires when a task is dropped on the quadrant itself (empty space, not on top of another task).
+    // If it lands on a task-item's own listener instead, that handler (manual reorder) takes over and
+    // stops propagation, so this one won't double-fire.
     zone.addEventListener('drop', (e) => {
       e.preventDefault();
       zone.classList.remove('drag-over');
       const id = e.dataTransfer.getData('text/plain') || draggedTaskId;
       if (id) moveTask(id, q);
+      clearManualDropIndicators();
     });
   });
   // ---------- Add-task inputs (quick add: text + Enter, opens full task with quadrant set) ----------
@@ -1309,18 +1755,21 @@
         q3: getComputedStyle(document.documentElement).getPropertyValue('--q3-color').trim(),
         q4: getComputedStyle(document.documentElement).getPropertyValue('--q4-color').trim()
       },
-      fields: ['cue', 'craving', 'action', 'reward', 'dueDate', 'duration'],
+      fields: ['cue', 'craving', 'action', 'reward', 'dueDate', 'duration', 'note'],
       trashRetention: 'forever'
     };
   }
   document.getElementById('exportBtn').addEventListener('click', () => {
     state.settings = collectSettingsSnapshot();
+    // Per instructions: the file is always named Eisen.JSON, with no date-based naming and no
+    // re-sorting of the underlying arrays — tasks/trash are exported exactly as currently stored.
     const exportPayload = {
       appName: 'Eisenhower Matrix',
       fileFormat: 'Eisen.JSON',
       version: 2,
       exportedAt: new Date().toISOString(),
       settings: state.settings,
+      sort: state.sort,
       tasks: state.tasks,
       trash: state.trash
     };
@@ -1328,9 +1777,8 @@
     const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    const stamp = new Date().toISOString().slice(0, 10);
     a.href = url;
-    a.download = `eisenhower-matrix-${stamp}.Eisen.json`;
+    a.download = 'Eisen.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1379,6 +1827,8 @@
       reward: typeof t.reward === 'string' ? t.reward : '',
       dueDate: (typeof t.dueDate === 'string' && t.dueDate) ? t.dueDate : null,
       duration: typeof t.duration === 'string' ? t.duration : '',
+      note: typeof t.note === 'string' ? t.note : '',
+      sortOrder: (typeof t.sortOrder === 'number') ? t.sortOrder : 0,
       createdAt: (typeof t.createdAt === 'number') ? t.createdAt : Date.now(),
       updatedAt: (typeof t.updatedAt === 'number') ? t.updatedAt : Date.now()
     };
@@ -1399,8 +1849,8 @@
     } else {
       return null;
     }
-    const tasks = rawTasks.map(t => normalizeOneTask(t)).filter(t => t && (t.text || t.cue || t.craving || t.action || t.reward || t.dueDate || t.duration));
-    const trash = rawTrash.map(t => normalizeOneTask(t)).filter(t => t && (t.text || t.cue || t.craving || t.action || t.reward || t.dueDate || t.duration));
+    const tasks = rawTasks.map(t => normalizeOneTask(t)).filter(t => t && (t.text || t.cue || t.craving || t.action || t.reward || t.dueDate || t.duration || t.note));
+    const trash = rawTrash.map(t => normalizeOneTask(t)).filter(t => t && (t.text || t.cue || t.craving || t.action || t.reward || t.dueDate || t.duration || t.note));
     return { tasks: tasks, trash: trash, settings: rawSettings };
   }
   document.getElementById('cancelImport').addEventListener('click', () => {
@@ -1421,6 +1871,7 @@
       if (pendingImportData.settings && Object.keys(pendingImportData.settings).length) {
         state.settings = pendingImportData.settings;
       }
+      backfillSortOrder();
       saveState();
       render();
       showToast('Merged ' + (pendingImportData.tasks.length + pendingImportData.trash.length) + ' task(s)');
@@ -1433,6 +1884,7 @@
       state.tasks = pendingImportData.tasks;
       state.trash = pendingImportData.trash;
       state.settings = pendingImportData.settings || {};
+      backfillSortOrder();
       saveState();
       render();
       showToast('Replaced with ' + (pendingImportData.tasks.length + pendingImportData.trash.length) + ' task(s)');
@@ -1460,6 +1912,21 @@
   });
   document.getElementById('closeTrash').addEventListener('click', () => {
     trashOverlay.classList.remove('active');
+  });
+  // Empty Trash button inside the trash panel — asks for confirmation, then wipes every trashed task.
+  document.getElementById('emptyTrashBtn').addEventListener('click', () => {
+    if (state.trash.length === 0) {
+      showToast('Trash is already empty');
+      return;
+    }
+    document.getElementById('emptyTrashModal').classList.add('active');
+  });
+  document.getElementById('cancelEmptyTrash').addEventListener('click', () => {
+    document.getElementById('emptyTrashModal').classList.remove('active');
+  });
+  document.getElementById('confirmEmptyTrash').addEventListener('click', () => {
+    emptyTrashPermanently();
+    document.getElementById('emptyTrashModal').classList.remove('active');
   });
   function renderTrashList() {
     trashList.innerHTML = '';
@@ -1533,6 +2000,7 @@
   // ---------- Init ----------
   loadState();
   state.settings = collectSettingsSnapshot();
+  syncSortDropdownUI();
   render();
 })();
 </script>

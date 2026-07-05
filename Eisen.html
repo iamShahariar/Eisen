@@ -248,6 +248,42 @@
     transition: border-color 0.2s ease;
   }
   .sort-dropdown select:focus { border-color: #764ba2; }
+  /* Ascending/Descending direction toggle — sits directly under the field select */
+  .sort-direction-toggle {
+    display: flex;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: rgba(20,20,40,0.04);
+    margin-top: 8px;
+  }
+  .sort-direction-toggle button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 7px 6px;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .sort-direction-toggle button.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+  }
+  .sort-direction-toggle button:not(.active):hover {
+    background: rgba(20,20,40,0.06);
+  }
+  .sort-direction-toggle button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .sort-direction-toggle button svg { width: 11px; height: 11px; }
   .sort-dropdown .sort-manual-note {
     font-size: 10.5px;
     color: var(--text-secondary);
@@ -1049,6 +1085,16 @@
             <option value="text">Task text (A–Z)</option>
             <option value="quadrant">Quadrant</option>
           </select>
+          <div class="sort-direction-toggle" id="sortDirectionToggle">
+            <button type="button" id="sortAscBtn" data-dir="asc" title="Ascending (A→Z, oldest→newest, lowest→highest)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+              Asc
+            </button>
+            <button type="button" id="sortDescBtn" data-dir="desc" title="Descending (Z→A, newest→oldest, highest→lowest)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+              Desc
+            </button>
+          </div>
           <div class="sort-manual-note">Drag tasks up/down within a block to reorder them</div>
         </div>
       </div>
@@ -1301,9 +1347,9 @@
   // state.tasks = active tasks currently in the matrix
   // state.trash = tasks that have been moved to trash (kept forever unless permanently deleted)
   // state.settings = app-level style/settings snapshot, included in every export
-  // state.sort = { by: 'manual'|'created'|'modified'|'cue'|'craving'|'action'|'reward'|'duration'|'deadline'|'text'|'quadrant' }
-  // NOTE: sort direction (asc/desc) has been removed per requirements — sort is always in one fixed direction per field.
-  let state = { tasks: [], trash: [], settings: {}, sort: { by: 'manual' } };
+  // state.sort = { by: 'manual'|'created'|'modified'|'cue'|'craving'|'action'|'reward'|'duration'|'deadline'|'text'|'quadrant', dir: 'asc'|'desc' }
+  // FIX: sort direction (asc/desc) is back. It's ignored when by === 'manual' (manual order has no direction).
+  let state = { tasks: [], trash: [], settings: {}, sort: { by: 'manual', dir: 'asc' } };
   let pendingImportData = null;
   let draggedTaskId = null;
   let editingTaskId = null; // id of the task currently open in the detail modal, or null if creating fresh via quick-add
@@ -1321,7 +1367,9 @@
             tasks: parsed.tasks || [],
             trash: Array.isArray(parsed.trash) ? parsed.trash : [],
             settings: parsed.settings || {},
-            sort: (parsed.sort && typeof parsed.sort === 'object') ? { by: parsed.sort.by || 'manual' } : { by: 'manual' }
+            sort: (parsed.sort && typeof parsed.sort === 'object')
+              ? { by: parsed.sort.by || 'manual', dir: (parsed.sort.dir === 'desc') ? 'desc' : 'asc' }
+              : { by: 'manual', dir: 'asc' }
           };
           // Backfill sortOrder for any tasks that predate manual sorting
           backfillSortOrder();
@@ -1331,7 +1379,7 @@
     } catch (e) {
       console.warn('Failed to load saved data', e);
     }
-    state = { tasks: [], trash: [], settings: {}, sort: { by: 'manual' } };
+    state = { tasks: [], trash: [], settings: {}, sort: { by: 'manual', dir: 'asc' } };
   }
   function saveState() {
     try {
@@ -1360,12 +1408,14 @@
   }
   // Returns tasks for a quadrant in the order dictated by the current master sort setting.
   // Completed tasks are ALWAYS pinned to the bottom and are excluded from the sort-by-field rules —
-  // they keep their own relative order (most recently completed last) regardless of the active sort mode.
+  // they keep their own relative order (most recently completed last) regardless of the active sort mode
+  // and regardless of asc/desc (direction only affects the active, non-completed tasks above them).
   function getSortedTasksForQuadrant(q) {
     const allTasks = state.tasks.filter(t => t.quadrant === q);
     const active = allTasks.filter(t => !t.completed);
     const completed = allTasks.filter(t => t.completed);
     const by = state.sort.by;
+    const dirMultiplier = (state.sort.dir === 'desc') ? -1 : 1;
     if (by === 'manual') {
       active.sort((a, b) => ((a.sortOrder ?? 0) - (b.sortOrder ?? 0)));
     } else {
@@ -1390,13 +1440,17 @@
           case 'quadrant': cmp = collator.compare(QUADRANT_LABELS[a.quadrant] || '', QUADRANT_LABELS[b.quadrant] || ''); break;
           default: cmp = 0;
         }
-        // Stable tiebreak by manual sortOrder so equal values don't jump around on re-render
+        // Apply direction to the field comparison itself
+        cmp = cmp * dirMultiplier;
+        // Stable tiebreak by manual sortOrder (not direction-flipped) so equal values don't jump
+        // around on re-render, and ties resolve the same way regardless of asc/desc.
         if (cmp === 0) cmp = (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
         return cmp;
       });
     }
     // Completed tasks: always at the bottom, ordered by completion recency (oldest-completed first, so
     // finishing a task simply appends it to the bottom stack in the order things were checked off).
+    // This ordering is intentionally NOT affected by the asc/desc toggle.
     completed.sort((a, b) => (a.completedAt || a.updatedAt || 0) - (b.completedAt || b.updatedAt || 0));
     return active.concat(completed);
   }
@@ -1562,12 +1616,15 @@
   // Reorders draggedId to sit immediately before/after targetId, switches its quadrant if needed,
   // and re-numbers sortOrder for every task in the destination block. Automatically flips the master
   // sort mode to Manual, since dropping a task in a specific spot only makes sense in manual mode.
+  // NOTE: only sort.by is forced to 'manual' here — sort.dir is left untouched, so if the user goes
+  // back to a field-based sort afterward, their last chosen direction is still remembered.
   function reorderTaskRelativeTo(draggedId, targetId, position, destQuadrant) {
     const dragged = state.tasks.find(t => t.id === draggedId);
     const target = state.tasks.find(t => t.id === targetId);
     if (!dragged || !target) return;
+    const quadrantChanged = dragged.quadrant !== destQuadrant;
     dragged.quadrant = destQuadrant;
-    dragged.updatedAt = Date.now();
+    if (quadrantChanged) markTaskModified(dragged);
     // Force manual mode so the visual result of the drag is actually preserved on re-render.
     if (state.sort.by !== 'manual') {
       state.sort.by = 'manual';
@@ -1623,7 +1680,12 @@
     if (inQ.length === 0) return 0;
     return Math.max(...inQ.map(t => (t.sortOrder ?? 0))) + 1;
   }
+  // FIX: centralizes "this task was actually changed" so updatedAt only moves when something real changed.
+  function markTaskModified(task) {
+    task.updatedAt = Date.now();
+  }
   function makeBlankTask(quadrant, text) {
+    const now = Date.now();
     return {
       id: uid(),
       text: (text || '').trim(),
@@ -1637,8 +1699,10 @@
       duration: '',
       note: '',
       sortOrder: nextSortOrderFor(quadrant),
-      createdAt: Date.now(),
-      updatedAt: Date.now()
+      createdAt: now,
+      // FIX: a freshly created task has not been modified yet. updatedAt starts null so
+      // "Last modified" sort correctly treats it as never-touched until it's actually edited.
+      updatedAt: null
     };
   }
   function addTask(quadrant, text) {
@@ -1652,12 +1716,13 @@
   }
   // Toggling completion: stamps completedAt so the "always at bottom, ordered by when completed"
   // rule has something stable to sort on. Unchecking clears it and the task rejoins normal sorting.
+  // This is a real state change, so it does count as a modification.
   function toggleComplete(id) {
     const task = state.tasks.find(t => t.id === id);
     if (task) {
       task.completed = !task.completed;
       task.completedAt = task.completed ? Date.now() : null;
-      task.updatedAt = Date.now();
+      markTaskModified(task);
       saveState();
       render();
     }
@@ -1698,7 +1763,7 @@
     if (idx === -1) return;
     const task = state.trash[idx];
     delete task.trashedAt;
-    task.updatedAt = Date.now();
+    markTaskModified(task);
     if (typeof task.sortOrder !== 'number') task.sortOrder = nextSortOrderFor(task.quadrant);
     state.tasks.push(task);
     state.trash.splice(idx, 1);
@@ -1712,7 +1777,7 @@
     if (task && task.quadrant !== newQuadrant) {
       task.quadrant = newQuadrant;
       task.sortOrder = nextSortOrderFor(newQuadrant);
-      task.updatedAt = Date.now();
+      markTaskModified(task);
       saveState();
       render();
     }
@@ -1727,30 +1792,76 @@
     render();
     showToast('All tasks moved to trash');
   }
-  // ---------- Sort dropdown (in sidebar) — direction control removed, single field-select only ----------
+  // ---------- Sort dropdown (in sidebar) — field select + asc/desc direction toggle ----------
   const sortToggleBtn = document.getElementById('sortToggleBtn');
   const sortDropdown = document.getElementById('sortDropdown');
   const sortBySelect = document.getElementById('sortBySelect');
+  const sortDirectionToggle = document.getElementById('sortDirectionToggle');
+  const sortAscBtn = document.getElementById('sortAscBtn');
+  const sortDescBtn = document.getElementById('sortDescBtn');
+  // FIX: toggling the dropdown open/closed no longer fights the outside-click handler below —
+  // stopPropagation here means this click never reaches the document listener in the same tick.
   sortToggleBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     sortDropdown.classList.toggle('active');
   });
-  // Close the dropdown when clicking anywhere outside it
+  // Prevent clicks *inside* the dropdown (select, direction buttons) from bubbling up and
+  // being treated as an "outside click" that closes the dropdown out from under the user.
+  sortDropdown.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+  // Close the dropdown when clicking anywhere outside it.
   document.addEventListener('click', (e) => {
-    if (!sortDropdown.contains(e.target) && e.target !== sortToggleBtn && !sortToggleBtn.contains(e.target)) {
+    if (sortDropdown.classList.contains('active') &&
+        !sortDropdown.contains(e.target) &&
+        e.target !== sortToggleBtn &&
+        !sortToggleBtn.contains(e.target)) {
+      sortDropdown.classList.remove('active');
+    }
+  });
+  // Also close on Escape, for keyboard users
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && sortDropdown.classList.contains('active')) {
       sortDropdown.classList.remove('active');
     }
   });
   function syncSortDropdownUI() {
     sortBySelect.value = state.sort.by;
-    sortDropdown.classList.toggle('manual-mode', state.sort.by === 'manual');
+    const isManual = state.sort.by === 'manual';
+    sortDropdown.classList.toggle('manual-mode', isManual);
+    // Direction toggle is meaningless in manual mode (there's no field to go up/down on), so disable it.
+    sortAscBtn.disabled = isManual;
+    sortDescBtn.disabled = isManual;
+    sortAscBtn.classList.toggle('active', !isManual && state.sort.dir === 'asc');
+    sortDescBtn.classList.toggle('active', !isManual && state.sort.dir === 'desc');
+  }
+  function directionLabelFor(dir) {
+    return dir === 'desc' ? 'descending' : 'ascending';
   }
   sortBySelect.addEventListener('change', () => {
     state.sort.by = sortBySelect.value;
     syncSortDropdownUI();
     saveState();
     render();
-    showToast(state.sort.by === 'manual' ? 'Manual sorting enabled — drag tasks to reorder' : 'Sorted by ' + sortBySelect.options[sortBySelect.selectedIndex].text);
+    showToast(state.sort.by === 'manual'
+      ? 'Manual sorting enabled — drag tasks to reorder'
+      : 'Sorted by ' + sortBySelect.options[sortBySelect.selectedIndex].text + ' (' + directionLabelFor(state.sort.dir) + ')');
+  });
+  sortAscBtn.addEventListener('click', () => {
+    if (state.sort.by === 'manual' || state.sort.dir === 'asc') return;
+    state.sort.dir = 'asc';
+    syncSortDropdownUI();
+    saveState();
+    render();
+    showToast('Sorted ascending');
+  });
+  sortDescBtn.addEventListener('click', () => {
+    if (state.sort.by === 'manual' || state.sort.dir === 'desc') return;
+    state.sort.dir = 'desc';
+    syncSortDropdownUI();
+    saveState();
+    render();
+    showToast('Sorted descending');
   });
   // ---------- Task detail modal ----------
   const taskModalOverlay = document.getElementById('taskModal');
@@ -1779,7 +1890,8 @@
     taskModalQuadrantBadge.textContent = QUADRANT_LABELS[task.quadrant];
     taskModalQuadrantBadge.style.background = QUADRANT_COLORS[task.quadrant].replace('var(', 'rgba(').replace(')', ', 0.15)');
     taskModalQuadrantBadge.style.color = QUADRANT_COLORS[task.quadrant];
-    lastEditedNote.textContent = 'Created ' + formatDateTime(task.createdAt) + ' · Last edited ' + formatDateTime(task.updatedAt);
+    lastEditedNote.textContent = 'Created ' + formatDateTime(task.createdAt) +
+      (task.updatedAt ? ' · Last edited ' + formatDateTime(task.updatedAt) : ' · Not yet edited');
     taskModalOverlay.classList.add('active');
     setTimeout(() => fieldText.focus(), 50);
   }
@@ -1787,25 +1899,43 @@
     taskModalOverlay.classList.remove('active');
     editingTaskId = null;
   }
-  // Saving always stamps updatedAt to "now" — even if nothing in the fields actually changed.
-  // Opening the modal and hitting Save (or Enter) counts as a touch/last-edit, per the task requirements.
+  // FIX: saving now only stamps updatedAt if a field actually changed. Opening the modal and hitting
+  // Save/Enter with no edits made no longer counts as a "modification" — the task's Last-modified
+  // sort position stays exactly where it was.
   function saveTaskModal() {
     if (!editingTaskId) { closeTaskModal(); return; }
     const task = state.tasks.find(t => t.id === editingTaskId);
     if (!task) { closeTaskModal(); return; }
-    task.text = fieldText.value.trim();
-    task.cue = fieldCue.value.trim();
-    task.craving = fieldCraving.value.trim();
-    task.action = fieldAction.value.trim();
-    task.reward = fieldReward.value.trim();
-    task.dueDate = fieldDeadline.value || null;
-    task.duration = fieldDuration.value.trim();
-    task.note = fieldNote.value.trim();
-    task.updatedAt = Date.now();
+    const nextText = fieldText.value.trim();
+    const nextCue = fieldCue.value.trim();
+    const nextCraving = fieldCraving.value.trim();
+    const nextAction = fieldAction.value.trim();
+    const nextReward = fieldReward.value.trim();
+    const nextDueDate = fieldDeadline.value || null;
+    const nextDuration = fieldDuration.value.trim();
+    const nextNote = fieldNote.value.trim();
+    const changed =
+      nextText !== (task.text || '') ||
+      nextCue !== (task.cue || '') ||
+      nextCraving !== (task.craving || '') ||
+      nextAction !== (task.action || '') ||
+      nextReward !== (task.reward || '') ||
+      nextDueDate !== (task.dueDate || null) ||
+      nextDuration !== (task.duration || '') ||
+      nextNote !== (task.note || '');
+    task.text = nextText;
+    task.cue = nextCue;
+    task.craving = nextCraving;
+    task.action = nextAction;
+    task.reward = nextReward;
+    task.dueDate = nextDueDate;
+    task.duration = nextDuration;
+    task.note = nextNote;
+    if (changed) markTaskModified(task);
     saveState();
     render();
     closeTaskModal();
-    showToast('Task saved');
+    showToast(changed ? 'Task saved' : 'No changes made');
   }
   document.getElementById('taskModalSave').addEventListener('click', saveTaskModal);
   document.getElementById('taskModalCancel').addEventListener('click', closeTaskModal);
@@ -1963,7 +2093,10 @@
       note: typeof t.note === 'string' ? t.note : '',
       sortOrder: (typeof t.sortOrder === 'number') ? t.sortOrder : 0,
       createdAt: (typeof t.createdAt === 'number') ? t.createdAt : Date.now(),
-      updatedAt: (typeof t.updatedAt === 'number') ? t.updatedAt : Date.now()
+      // FIX: imported tasks preserve "never modified" (null/undefined) instead of being stamped
+      // with a fresh timestamp on import, which would have wrongly made every imported task look
+      // "just modified".
+      updatedAt: (typeof t.updatedAt === 'number') ? t.updatedAt : null
     };
     if (typeof t.trashedAt === 'number') task.trashedAt = t.trashedAt;
     return task;

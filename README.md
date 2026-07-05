@@ -3,6 +3,8 @@ Eisenhower Matrix based To-Do List
 
 Just open the HTML file on Browser. 
 
-Interface 
+To Save progress, save as JSON and Import Later. 
 
-<img width="1423" height="905" alt="image" src="https://github.com/user-attachments/assets/fecc37ce-823e-4eea-bc02-041bdd2f4792" />
+Interface 
+<img width="1345" height="608" alt="image" src="https://github.com/user-attachments/assets/73701b2b-1301-43f9-8b7a-3b0014288d9f" />
+
